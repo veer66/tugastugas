@@ -70,7 +70,9 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = create_engine(get_url())
+    connectable = context.config.attributes.get("connection", None)
+    if connectable is None:
+        connectable = create_engine(get_url())
 
     with connectable.connect() as connection:
         context.configure(
