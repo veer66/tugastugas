@@ -16,16 +16,14 @@ pg_engine = create_postgres_fixture(Base)
 
 
 @pytest.mark.alembic()
-def test_project_query(alembic_runner: Any, pg_engine: Any) -> None:
+def prepare(alembic_runner: Any) -> None:
     alembic_runner.migrate_up_to("head", return_current=False)
+
+def test_project_query(pg_engine: Any) -> None:
     session_factory = sessionmaker(autocommit=False, autoflush=False,
                                    bind=pg_engine)
     pg_session = scoped_session_factory(session_factory)
     Base.query = pg_session.query_property()
-    # a_task: Task = {"body": "task1"}
-    # a_board: Board = {"name": "doing", "tasks": [a_task]}
-    # pg_session.add(Project(title="A1", content={"boards": [a_board]}))
-    # pg_session.commit()
 
     mut_query = '''
       mutation {
@@ -52,3 +50,16 @@ def test_project_query(alembic_runner: Any, pg_engine: Any) -> None:
     Base.query = pg_session.query_property()
     result = schema.schema.execute(query)
     assert result.data['projects'][0]['title'] == 'A1'
+    added_id = str(mut_result.data["createProject"]["project"]["id"])
+    del_query = 'mutation { deleteProject(id: ' + added_id + ') { id } }'
+    del_result = mut_result = schema.schema.execute(del_query, context = {"session": pg_session})
+
+    assert del_result.errors is None
+
+    query_after_del = '''
+              query {
+                projects { id }
+              }
+              '''
+    result_after_del = schema.schema.execute(query_after_del)
+    assert len(result_after_del.data['projects']) == 0
