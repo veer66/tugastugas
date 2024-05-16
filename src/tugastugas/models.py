@@ -1,6 +1,9 @@
-from sqlalchemy import Column, Integer, String
+from typing import Any, TypedDict
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import JSONB
 from tugastugas.database import Base
+
 
 class User(Base):
     """
@@ -17,6 +20,14 @@ class User(Base):
     password_hash: Mapped[String] = mapped_column(String(128))
 
 
+class Task(TypedDict):
+    body: str
+
+
+class ProjectData(TypedDict):
+    boards: list[Task]
+
+
 class Project(Base):
     """
     This is a Project model. It consists of the title, and data, which is mainly
@@ -27,3 +38,4 @@ class Project(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[String] = mapped_column(String())
+    data: Mapped[ProjectData] = mapped_column(JSONB)
