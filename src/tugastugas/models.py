@@ -43,4 +43,4 @@ class Project(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[String] = mapped_column(String())
-    data: Mapped[ProjectData] = mapped_column(JSONB)
+    content: Mapped[ProjectData] = mapped_column(JSONB)

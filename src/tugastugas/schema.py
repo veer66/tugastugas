@@ -23,7 +23,7 @@ class BoardNode(ObjectType):
     tasks = List(TaskNode)
 
 
-class ProjectDataNode(ObjectType):
+class ProjectContentNode(ObjectType):
     boards = List(BoardNode)
 
 
@@ -34,7 +34,7 @@ class ProjectNode(SQLAlchemyObjectType):
         model = Project
         interfaces = (relay.Node,)
 
-    data = Field(ProjectDataNode)
+    content = Field(ProjectContentNode)
 
 
 class Query(graphene.ObjectType):

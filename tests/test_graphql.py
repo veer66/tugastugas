@@ -24,7 +24,7 @@ def test_project_query(alembic_runner: Any, pg_engine: Any) -> None:
     Base.query = pg_session.query_property()
     a_task: Task = {"body": "task1"}
     a_board: Board = {"name": "doing", "tasks": [a_task]}
-    pg_session.add(Project(title="A1", data={"boards": [a_board]}))
+    pg_session.add(Project(title="A1", content={"boards": [a_board]}))
     pg_session.commit()
     query = '''
               query Hey {
