@@ -19,7 +19,9 @@ dependencies = [
 	     "pytest-alembic>=0.11,<0.12",
 	     "pytest-mock-resources[docker]",
 	     "graphene-sqlalchemy==v3.0.0rc1",
-	     "sqlalchemy>=2"
+	     "sqlalchemy>=2",
+	     "python-oauth2",
+	     "fastapi"
 ]
 
 [project.urls]
