@@ -9,7 +9,9 @@ from graphene import String
 from graphene import List
 from graphene import Field
 from graphene import Mutation
+from graphene import Int
 from graphene_sqlalchemy import SQLAlchemyObjectType
+from graphene_sqlalchemy.types import ORMField
 from graphene_sqlalchemy.utils import get_session
 from tugastugas.models import Project
 
@@ -32,8 +34,8 @@ class ProjectNode(SQLAlchemyObjectType):
     class Meta:
         "meta"
         model = Project
-        interfaces = (relay.Node,)
 
+    id = ORMField(type_=Int)
     content = Field(ProjectContentNode)
 
 
@@ -70,8 +72,21 @@ class CreateProject(Mutation):
 
     project = Field(ProjectNode)
 
-    #@classmethod
-    #def mutate(cls, root, info, title, content):
+
+    def mutate(self, info, title, content):
+        session = get_session(info.context)
+        project = Project(title = title, content = content)
+        session.add(project)
+        session.commit()
+        return CreateProject(project = project)
+
+
+class DeleteProject(Mutation):
+    class Arguments:
+        id = String(required=True)
+
+    id = String(required=True)
+
     def mutate(self, info, title, content):
         session = get_session(info.context)
         project = Project(title = title, content = content)
