@@ -4,9 +4,27 @@ GraphQL schema
 from typing import Any
 import graphene
 from graphene import relay
+from graphene import JSONString
+from graphene import ObjectType
+from graphene import String
+from graphene import List
+from graphene import Field
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from graphene_sqlalchemy.fields import SQLAlchemyConnectionField
 from tugastugas.models import Project
+
+
+class TaskNode(ObjectType):
+    body = String()
+
+
+class BoardNode(ObjectType):
+    name = String()
+    tasks = List(TaskNode)
+
+
+class ProjectDataNode(ObjectType):
+    boards = List(BoardNode)
 
 
 class ProjectNode(SQLAlchemyObjectType):
@@ -15,6 +33,8 @@ class ProjectNode(SQLAlchemyObjectType):
         "meta"
         model = Project
         interfaces = (relay.Node,)
+
+    data = Field(ProjectDataNode)
 
 
 class Query(graphene.ObjectType):
