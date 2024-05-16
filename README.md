@@ -21,3 +21,4 @@ A showcase for:
 * Boards and tasks are stored in a JSONB column to avoid too many joins, which would degrade performance even with a few users.
 * Project and user relations are stored in a traditional relational database table because querying projects would not cause as many join operations as joining projects with boards with tasks.
 * I'm avoiding SQL 2011 temporal functionality in this project because using the temporal_tables extension isn't feasible with Amazon Aurora.
+* Project-level syncing with clients eliminates the need for client-side ID mapping, compared to board- or task-level approaches.
