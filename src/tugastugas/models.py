@@ -24,8 +24,13 @@ class Task(TypedDict):
     body: str
 
 
+class Board(TypedDict):
+    name: str
+    tasks: list[Task]
+
+
 class ProjectData(TypedDict):
-    boards: list[Task]
+    boards: list[Board]
 
 
 class Project(Base):
