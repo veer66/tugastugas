@@ -22,10 +22,25 @@ def test_project_query(alembic_runner: Any, pg_engine: Any) -> None:
                                    bind=pg_engine)
     pg_session = scoped_session_factory(session_factory)
     Base.query = pg_session.query_property()
-    a_task: Task = {"body": "task1"}
-    a_board: Board = {"name": "doing", "tasks": [a_task]}
-    pg_session.add(Project(title="A1", content={"boards": [a_board]}))
-    pg_session.commit()
+    # a_task: Task = {"body": "task1"}
+    # a_board: Board = {"name": "doing", "tasks": [a_task]}
+    # pg_session.add(Project(title="A1", content={"boards": [a_board]}))
+    # pg_session.commit()
+
+    mut_query = '''
+      mutation {
+        createProject(
+          title: "A1",
+            content: {
+              boards: [{name: "DOING", tasks: {body: "eat"}}]
+            }
+        ) { project { id } }
+      }
+    '''
+    mut_result = schema.schema.execute(mut_query, context = {"session": pg_session})
+
+    assert mut_result.errors is None
+
     query = '''
               query Hey {
                 projects {

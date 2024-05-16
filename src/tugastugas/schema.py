@@ -4,13 +4,13 @@ GraphQL schema
 from typing import Any
 import graphene
 from graphene import relay
-from graphene import JSONString
-from graphene import ObjectType
+from graphene import ObjectType, InputObjectType
 from graphene import String
 from graphene import List
 from graphene import Field
+from graphene import Mutation
 from graphene_sqlalchemy import SQLAlchemyObjectType
-from graphene_sqlalchemy.fields import SQLAlchemyConnectionField
+from graphene_sqlalchemy.utils import get_session
 from tugastugas.models import Project
 
 
@@ -47,4 +47,41 @@ class Query(graphene.ObjectType):
         return proj_query.all()
 
 
-schema = graphene.Schema(query=Query)
+#################### MUTATION ########################
+
+
+class TaskInput(InputObjectType):
+    body = String(required=True)
+
+
+class BoardInput(InputObjectType):
+    name = String(required=True)
+    tasks = List(TaskInput)
+
+
+class ProjectContentInput(InputObjectType):
+    boards = List(BoardInput)
+
+
+class CreateProject(Mutation):
+    class Arguments:
+        title = String(required=True)
+        content = ProjectContentInput(required=True)
+
+    project = Field(ProjectNode)
+
+    #@classmethod
+    #def mutate(cls, root, info, title, content):
+    def mutate(self, info, title, content):
+        session = get_session(info.context)
+        project = Project(title = title, content = content)
+        session.add(project)
+        session.commit()
+        return CreateProject(project = project)
+
+
+class Mutation(ObjectType):
+    create_project = CreateProject.Field()
+
+
+schema = graphene.Schema(query=Query, mutation=Mutation)
