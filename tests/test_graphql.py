@@ -1,8 +1,8 @@
 """
 GraphQL querying tests
 """
-import pytest
 from typing import Any
+import pytest
 from pytest_mock_resources import create_postgres_fixture
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session as scoped_session_factory
