@@ -1,43 +1,30 @@
 """
 GraphQL schema
 """
-
+from typing import Any
 import graphene
 from graphene import relay
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from graphene_sqlalchemy.fields import SQLAlchemyConnectionField
 from tugastugas.models import Project
-from tugastugas.database import Base
+
 
 class ProjectNode(SQLAlchemyObjectType):
+    "Graphene Project wrapper"
     class Meta:
+        "meta"
         model = Project
         interfaces = (relay.Node,)
 
+
 class Query(graphene.ObjectType):
+    "The main query object for Graphene"
     node = relay.Node.Field()
     projects = graphene.List(ProjectNode)
 
-    def resolve_projects(self, info):
-        query = ProjectNode.get_query(info)
-        return query.all()
-
-# from tugastugas.database import bind
+    def resolve_projects(self, info: Any) -> Any:
+        proj_query = ProjectNode.get_query(info)
+        return proj_query.all()
 
 
 schema = graphene.Schema(query=Query)
-
-#######################################
-query = '''
-  query Hey {
-    projects {
-      id,
-      title
-    }
-  }
-'''
-from tugastugas.database import bind
-bind()
-result = schema.execute(query)
-
-print(result)
