@@ -1,1 +1,4 @@
 * Username must be unique
+* OAuth
+* Report wheter CRUD op is successful
+* Add log when database connot connect
