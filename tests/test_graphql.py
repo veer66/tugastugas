@@ -30,7 +30,7 @@ def test_project_query(pg_engine: Any) -> None:
         createProject(
           title: "A1",
             content: {
-              boards: [{name: "DOING", tasks: {body: "eat"}}]
+              boards: [{name: "DOING", tasks: [{body: "eat"}]}]
             }
         ) { project { id } }
       }
@@ -38,6 +38,7 @@ def test_project_query(pg_engine: Any) -> None:
     mut_result = schema.schema.execute(mut_query, context = {"session": pg_session})
 
     assert mut_result.errors is None
+    added_id = str(mut_result.data["createProject"]["project"]["id"])
 
     query = '''
               query Hey {
@@ -50,7 +51,46 @@ def test_project_query(pg_engine: Any) -> None:
     Base.query = pg_session.query_property()
     result = schema.schema.execute(query)
     assert result.data['projects'][0]['title'] == 'A1'
-    added_id = str(mut_result.data["createProject"]["project"]["id"])
+
+
+    update_query = '''
+      mutation {
+        updateProject(
+          id: __ID__,
+          title: "A2",
+            content: {
+              boards: [{name: "DONE", tasks: [{body: "eat"}, {body: "sleep"}]}]
+            }
+        ) { project { id, title, content { boards { name, tasks { body } } } } }
+      }
+    '''
+    update_query = update_query.replace('__ID__', str(added_id))
+    update_result = schema.schema.execute(update_query,
+                                          context = {"session": pg_session})
+
+    assert update_result.errors is None
+
+    board = update_result.data["updateProject"]["project"]["content"]["boards"][0]
+    assert (board["tasks"][1]["body"]) == "sleep"
+
+    after_update_query = '''
+              query {
+                projects {
+                  id,
+                  title,
+                  content { boards { name, tasks { body } } }
+                }
+              }
+            '''
+    after_update_result = schema.schema.execute(after_update_query,
+                                          context = {"session": pg_session})
+
+    assert after_update_result.errors is None
+    print(after_update_result.data)
+    after_update_project = after_update_result.data["projects"][0]
+    after_update_board = after_update_project["content"]["boards"][0]
+    assert after_update_board["tasks"][1]["body"] == "sleep"
+
     del_query = 'mutation { deleteProject(id: ' + added_id + ') { id } }'
     del_result = mut_result = schema.schema.execute(del_query, context = {"session": pg_session})
 

@@ -14,7 +14,8 @@ from graphene_sqlalchemy import SQLAlchemyObjectType
 from graphene_sqlalchemy.types import ORMField
 from graphene_sqlalchemy.utils import get_session
 from tugastugas.models import Project
-from sqlalchemy import delete
+from sqlalchemy import select, delete
+
 
 class TaskNode(ObjectType):
     body = String()
@@ -95,8 +96,31 @@ class DeleteProject(Mutation):
         return DeleteProject(id = id)
 
 
+class UpdateProject(Mutation):
+    class Arguments:
+        id = Int(required=True)
+        title = String(required=True)
+        content = ProjectContentInput(required=True)
+
+    project = Field(ProjectNode)
+
+    def mutate(self, info, id, title, content):
+        session = get_session(info.context)
+        stmt = select(Project).filter_by(id = id)
+        the_project = session.execute(stmt).scalar_one_or_none()
+        if the_project is not None:
+            the_project.title = title
+            the_project.content = content
+            session.add(the_project)
+            session.commit()
+            return CreateProject(project = the_project)
+        else:
+            return CreateProject(project = None)
+
+
 class Mutation(ObjectType):
     create_project = CreateProject.Field()
     delete_project = DeleteProject.Field()
+    update_project = UpdateProject.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
