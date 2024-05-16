@@ -24,6 +24,7 @@ def bind():
     Base.query = scoped_session.query_property()
 #    Base.query = scoped_session.query()
     Base.metadata.bind = engine
+    return scoped_session
 
 def init_db():
     session = scoped_session()
