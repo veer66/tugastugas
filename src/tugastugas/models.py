@@ -1,9 +1,19 @@
-from typing import Any, TypedDict
+from typing import Any, TypedDict, List
 from sqlalchemy import String
+from sqlalchemy import Table
+from sqlalchemy import Column
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
 from tugastugas.database import Base
+from sqlalchemy.orm import relationship
 
+user_project_table = Table(
+    "user_project",
+    Base.metadata,
+    Column("user_id", ForeignKey("user.id")),
+    Column("project_id", ForeignKey("project.id")),
+)
 
 class User(Base):
     """
@@ -44,3 +54,4 @@ class Project(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[String] = mapped_column(String())
     content: Mapped[ProjectData] = mapped_column(JSONB)
+    users: Mapped[List[User]] = relationship(secondary=user_project_table)
