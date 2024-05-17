@@ -1,5 +1,7 @@
 [X] Username must be unique
-[ ] OAuth
-[ ] Report wheter CRUD op is successful
+[X] OAuth
+[X] Report whether CRUD op is successful
 [ ] Add log when database connot connect
 [ ] verify input JSON data
+[ ] Search by date and status
+[ ] Identify last-update user
