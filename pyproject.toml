@@ -20,8 +20,8 @@ dependencies = [
 	     "pytest-mock-resources[docker]",
 	     "graphene-sqlalchemy==v3.0.0rc1",
 	     "sqlalchemy>=2",
-	     "python-oauth2",
-	     "fastapi"
+	     "fastapi",
+	     "starlette-graphene3"
 ]
 
 [project.urls]
