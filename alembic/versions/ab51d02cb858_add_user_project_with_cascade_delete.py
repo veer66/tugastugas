@@ -1,8 +1,8 @@
-"""add user-project
+"""add user-project with cascade delete
 
-Revision ID: 0f7a254539ba
+Revision ID: ab51d02cb858
 Revises: 32c172b082bc
-Create Date: 2024-05-17 07:14:13.451332+00:00
+Create Date: 2024-05-17 09:03:05.660072+00:00
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '0f7a254539ba'
+revision: str = 'ab51d02cb858'
 down_revision: Union[str, None] = '32c172b082bc'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -23,7 +23,7 @@ def upgrade() -> None:
     op.create_table('user_project',
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('project_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['project_id'], ['project.id'], ),
+    sa.ForeignKeyConstraint(['project_id'], ['project.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('user_id', 'project_id')
     )
