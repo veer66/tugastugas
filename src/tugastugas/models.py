@@ -8,12 +8,16 @@ from sqlalchemy.dialects.postgresql import JSONB
 from tugastugas.database import Base
 from sqlalchemy.orm import relationship
 
-user_project_table = Table(
-    "user_project",
-    Base.metadata,
-    Column("user_id", ForeignKey("user.id")),
-    Column("project_id", ForeignKey("project.id")),
-)
+
+class UserProject(Base):
+    __tablename__ = "user_project"
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), primary_key=True)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("project.id", ondelete="CASCADE"), primary_key=True
+    )
+    user: Mapped["User"] = relationship()
+    project: Mapped["Project"] = relationship()
+
 
 class User(Base):
     """
@@ -54,4 +58,4 @@ class Project(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[String] = mapped_column(String())
     content: Mapped[ProjectData] = mapped_column(JSONB)
-    users: Mapped[List[User]] = relationship(secondary=user_project_table)
+

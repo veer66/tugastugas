@@ -1,10 +1,11 @@
-from typing import Annotated
+from typing import Annotated, Any
 from fastapi import Depends, FastAPI, HTTPException, status, Security, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from tugastugas.schema import schema
 from tugastugas.database import bind
 from starlette.responses import PlainTextResponse
+from starlette.requests import HTTPConnection, Request
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from starlette.routing import Route
 from starlette_graphene3 import GraphQLApp
@@ -93,6 +94,7 @@ class BearerAuthBackend(AuthenticationBackend):
         user = User(**user_dict)
         return AuthCredentials(["authenticated"]), user
 
+
 class GuardUnauthorizedRequestMiddleware:
     def __init__(
         self, app: ASGIApp
@@ -100,7 +102,6 @@ class GuardUnauthorizedRequestMiddleware:
         self.app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        print(scope["user"])
         if "user" in scope and scope["user"].is_authenticated:
             await self.app(scope, receive, send)
         else:
@@ -108,12 +109,19 @@ class GuardUnauthorizedRequestMiddleware:
             await response(scope, receive, send)
             return
 
+
 middleware = [
     Middleware(AuthenticationMiddleware, backend=BearerAuthBackend()),
     Middleware(GuardUnauthorizedRequestMiddleware)
 ]
 
-graphql_app = GraphQLApp(schema)
+
+async def get_context_value(request: HTTPConnection) -> Any:
+    return {"session": session, "user": request.user}
+
+
+graphql_app = GraphQLApp(schema, context_value=get_context_value)
 graphql_route = Route('/', endpoint=graphql_app, middleware=middleware, methods=["POST"])
+
 
 app.add_route('/', graphql_route)
