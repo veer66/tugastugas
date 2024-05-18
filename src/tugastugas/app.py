@@ -10,9 +10,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from starlette.routing import Route
 from starlette_graphene3 import GraphQLApp
 
-
 app = FastAPI()
-
 
 ################ User schema #############
 
@@ -26,6 +24,7 @@ class User(BaseModel):
 ################ OAUTH2 ##################
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 
 def fake_decode_token(token):
     if token == "access-token-1" or token == b"access-token-1":
@@ -50,8 +49,8 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 def get_current_active_user(
-    current_user: Annotated[User, Security(get_current_user, scopes=["me"])],
-):
+    current_user: Annotated[User,
+                            Security(get_current_user, scopes=["me"])], ):
     if not current_user.is_authenticated:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
@@ -61,10 +60,10 @@ def get_current_active_user(
 def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     return {"access_token": "access-token-1", "token_type": "bearer"}
 
+
 @app.get("/users/me")
 async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-):
+    current_user: Annotated[User, Depends(get_current_active_user)], ):
     return current_user
 
 
@@ -72,14 +71,15 @@ async def read_users_me(
 
 session = bind()
 
-from starlette.authentication import (
-    AuthCredentials, AuthenticationBackend, AuthenticationError
-)
+from starlette.authentication import (AuthCredentials, AuthenticationBackend,
+                                      AuthenticationError)
 
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 
+
 class BearerAuthBackend(AuthenticationBackend):
+
     async def authenticate(self, conn):
         if "Authorization" not in conn.headers:
             return
@@ -96,12 +96,12 @@ class BearerAuthBackend(AuthenticationBackend):
 
 
 class GuardUnauthorizedRequestMiddleware:
-    def __init__(
-        self, app: ASGIApp
-    ) -> None:
+
+    def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(self, scope: Scope, receive: Receive,
+                       send: Send) -> None:
         if "user" in scope and scope["user"].is_authenticated:
             await self.app(scope, receive, send)
         else:
@@ -121,7 +121,9 @@ async def get_context_value(request: HTTPConnection) -> Any:
 
 
 graphql_app = GraphQLApp(schema, context_value=get_context_value)
-graphql_route = Route('/', endpoint=graphql_app, middleware=middleware, methods=["POST"])
-
+graphql_route = Route('/',
+                      endpoint=graphql_app,
+                      middleware=middleware,
+                      methods=["POST"])
 
 app.add_route('/', graphql_route)

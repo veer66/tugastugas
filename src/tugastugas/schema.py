@@ -21,6 +21,7 @@ from sqlalchemy import select, delete, and_
 
 class TaskNode(SQLAlchemyObjectType):
     "Graphene Project wrapper"
+
     class Meta:
         "meta"
         model = Task
@@ -34,6 +35,7 @@ class TaskNode(SQLAlchemyObjectType):
 
     def resolve_last_modifier(self, info):
         return self.last_modifier.username
+
 
 class Query(graphene.ObjectType):
     "The main query object for Graphene"
@@ -52,7 +54,6 @@ class Query(graphene.ObjectType):
 #################### MUTATION ########################
 
 
-
 def get_user(session, user_id):
     stmt = select(User).filter_by(id=user_id)
     user = session.scalars(stmt).one_or_none()
@@ -60,6 +61,7 @@ def get_user(session, user_id):
 
 
 class CreateTask(Mutation):
+
     class Arguments:
         title = String(required=True)
         description = String(default_value="")
@@ -68,7 +70,12 @@ class CreateTask(Mutation):
 
     task = Field(TaskNode)
 
-    def mutate(self, info, title, description="", due_date=None, status="pending"):
+    def mutate(self,
+               info,
+               title,
+               description="",
+               due_date=None,
+               status="pending"):
         session = get_session(info.context)
         user_id = info.context.get('user').id
         if user_id is None:
@@ -76,10 +83,16 @@ class CreateTask(Mutation):
         user = get_user(session, user_id)
         if user is None:
             raise GraphQLError(f'The user-id {user_id} is not found.')
-        new_task = Task(title=title, description=description, status=status, due_date=due_date, creator=user, last_modifier=user)
+        new_task = Task(title=title,
+                        description=description,
+                        status=status,
+                        due_date=due_date,
+                        creator=user,
+                        last_modifier=user)
         session.add(new_task)
         session.commit()
         return CreateTask(task=new_task)
+
 
 def is_owned(a_task, user_id):
     return a_task.creator_id == user_id
@@ -93,6 +106,7 @@ def get_task(session, task_id):
 
 
 class DeleteTask(Mutation):
+
     class Arguments:
         id = Int(required=True)
 
@@ -117,6 +131,7 @@ class DeleteTask(Mutation):
 
 
 class UpdateTask(Mutation):
+
     class Arguments:
         id = Int(required=True)
         title = String(required=False)
@@ -125,7 +140,8 @@ class UpdateTask(Mutation):
         status = String(required=False)
 
     task = Field(TaskNode)
-#title, description, due_date, status
+
+    #title, description, due_date, status
     def mutate(self, info, id, **kwargs):
         session = get_session(info.context)
         user_id = info.context.get('user').id
@@ -144,9 +160,9 @@ class UpdateTask(Mutation):
 
 
 class Mutation(ObjectType):
-     create_task = CreateTask.Field()
-     delete_task = DeleteTask.Field()
-     update_task = UpdateTask.Field()
+    create_task = CreateTask.Field()
+    delete_task = DeleteTask.Field()
+    update_task = UpdateTask.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

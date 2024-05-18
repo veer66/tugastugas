@@ -14,18 +14,22 @@ def get_url():
         os.getenv("DB_NAME", "tugastugas"),
     )
 
+
 class Base(DeclarativeBase):
     pass
 
+
 def bind():
     engine = create_engine(get_url())
-    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session_factory = sessionmaker(autocommit=False,
+                                   autoflush=False,
+                                   bind=engine)
     scoped_session = scoped_session_factory(session_factory)
     Base.query = scoped_session.query_property()
-#    Base.query = scoped_session.query()
+    #    Base.query = scoped_session.query()
     Base.metadata.bind = engine
     return scoped_session
 
+
 def init_db():
     session = scoped_session()
-
