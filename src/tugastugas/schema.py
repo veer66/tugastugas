@@ -21,6 +21,7 @@ from sqlalchemy import select, delete, and_
 from sqlalchemy.orm import aliased
 from tugastugas.models import User, Task
 
+
 class TaskNode(SQLAlchemyObjectType):
     "Graphene Project wrapper"
 
@@ -31,7 +32,6 @@ class TaskNode(SQLAlchemyObjectType):
     creator = Field(String)
     last_modifier = Field(String)
 
-
     def resolve_creator(self, info):
         return self.creator.username
 
@@ -41,7 +41,12 @@ class TaskNode(SQLAlchemyObjectType):
 
 class Query(graphene.ObjectType):
     "The main query object for Graphene"
-    tasks = graphene.List(TaskNode, status=String(), creator=String(), last_modifier=String(), due_since=Date(), due_before=Date())
+    tasks = graphene.List(TaskNode,
+                          status=String(),
+                          creator=String(),
+                          last_modifier=String(),
+                          due_since=Date(),
+                          due_before=Date())
 
     def resolve_tasks(self, info: Any, **kwargs) -> Any:
         session = get_session(info.context)
@@ -53,10 +58,15 @@ class Query(graphene.ObjectType):
             proj_query = proj_query.filter_by(status=kwargs['status'])
         if 'creator' in kwargs:
             creator_alias = aliased(User)
-            proj_query = proj_query.join(creator_alias, creator_alias.id == Task.creator_id).where(creator_alias.username == kwargs['creator'])
+            proj_query = proj_query.join(
+                creator_alias, creator_alias.id == Task.creator_id).where(
+                    creator_alias.username == kwargs['creator'])
         if 'last_modifier' in kwargs:
             last_modifier_alias = aliased(User)
-            proj_query = proj_query.join(last_modifier_alias, last_modifier_alias.id == Task.last_modifier_id).where(last_modifier_alias.username == kwargs['last_modifier'])
+            proj_query = proj_query.join(
+                last_modifier_alias,
+                last_modifier_alias.id == Task.last_modifier_id).where(
+                    last_modifier_alias.username == kwargs['last_modifier'])
         if 'due_since' in kwargs:
             proj_query = proj_query.where(Task.due_date >= kwargs['due_since'])
         if 'due_before' in kwargs:
