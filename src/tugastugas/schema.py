@@ -13,22 +13,24 @@ from graphene import Field
 from graphene import Mutation
 from graphene import Int
 from graphene_sqlalchemy import SQLAlchemyObjectType
+from graphene_sqlalchemy.fields import SQLAlchemyConnectionField
 from graphene_sqlalchemy.types import ORMField
 from graphene_sqlalchemy.utils import get_session
-from tugastugas.models import User, Task
+from graphql_relay import from_global_id
 from sqlalchemy import select, delete, and_
-
+from sqlalchemy.orm import aliased
+from tugastugas.models import User, Task
 
 class TaskNode(SQLAlchemyObjectType):
     "Graphene Project wrapper"
 
     class Meta:
-        "meta"
         model = Task
 
     id = ORMField(type_=Int)
     creator = Field(String)
     last_modifier = Field(String)
+
 
     def resolve_creator(self, info):
         return self.creator.username
@@ -39,15 +41,23 @@ class TaskNode(SQLAlchemyObjectType):
 
 class Query(graphene.ObjectType):
     "The main query object for Graphene"
-    node = relay.Node.Field()
-    tasks = graphene.List(TaskNode)
+    tasks = graphene.List(TaskNode, status=String(), creator=String(), last_modifier=String())
 
-    def resolve_tasks(self, info: Any) -> Any:
+    def resolve_tasks(self, info: Any, **kwargs) -> Any:
         session = get_session(info.context)
         user_id = info.context.get('user').id
         if user_id is None:
             raise GraphQLError('This op needs user-id.')
         proj_query = TaskNode.get_query(info)
+        if 'status' in kwargs:
+            proj_query = proj_query.filter_by(status=kwargs['status'])
+        if 'creator' in kwargs:
+            creator_alias = aliased(User)
+            proj_query = proj_query.join(creator_alias, creator_alias.id == Task.creator_id).where(creator_alias.username == kwargs['creator'])
+        if 'last_modifier' in kwargs:
+            last_modifier_alias = aliased(User)
+            proj_query = proj_query.join(last_modifier_alias, last_modifier_alias.id == Task.last_modifier_id).where(last_modifier_alias.username == kwargs['last_modifier'])
+        print(kwargs)
         return proj_query.all()
 
 
@@ -108,9 +118,9 @@ def get_task(session, task_id):
 class DeleteTask(Mutation):
 
     class Arguments:
-        id = Int(required=True)
+        id = String(required=True)
 
-    id = Int(required=True)
+    id = String(required=True)
 
     def mutate(self, info, id):
         session = get_session(info.context)

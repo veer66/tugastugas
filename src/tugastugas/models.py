@@ -23,8 +23,8 @@ class User(Base):
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[String] = mapped_column(String(128), unique=True)
-    password_hash: Mapped[String] = mapped_column(String(128))
+    username: Mapped[str] = mapped_column(String(128), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(128))
 
 
 #    tasks:Mapped[List["Task"]] = relationship(foreign_keys=["task.creator_id"])
@@ -57,7 +57,7 @@ class Task(Base):
 class HTask(Base):
     __tablename__ = 'h_task'
     id: Mapped[int] = mapped_column(primary_key=True)
-    target_row_id: Mapped[int] = mapped_column(Integer(), nullable=False)
+    target_row_id: Mapped[int] = mapped_column(String(), nullable=False)
     executed_operation: Mapped[int] = mapped_column(Integer(), nullable=False)
     operation_executed_at: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMP(timezone=False),
