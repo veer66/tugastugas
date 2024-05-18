@@ -8,67 +8,49 @@ from graphene import relay
 from graphene import ObjectType, InputObjectType
 from graphene import String
 from graphene import List
+from graphene import DateTime
 from graphene import Field
 from graphene import Mutation
 from graphene import Int
 from graphene_sqlalchemy import SQLAlchemyObjectType
 from graphene_sqlalchemy.types import ORMField
 from graphene_sqlalchemy.utils import get_session
-from tugastugas.models import Project, UserProject, User
+from tugastugas.models import User, Task
 from sqlalchemy import select, delete, and_
 
 
-class TaskNode(ObjectType):
-    body = String()
-
-
-class BoardNode(ObjectType):
-    name = String()
-    tasks = List(TaskNode)
-
-
-class ProjectContentNode(ObjectType):
-    boards = List(BoardNode)
-
-
-class ProjectNode(SQLAlchemyObjectType):
+class TaskNode(SQLAlchemyObjectType):
     "Graphene Project wrapper"
     class Meta:
         "meta"
-        model = Project
+        model = Task
 
     id = ORMField(type_=Int)
-    content = Field(ProjectContentNode)
+    creator = Field(String)
+    last_modifier = Field(String)
 
+    def resolve_creator(self, info):
+        return self.creator.username
+
+    def resolve_last_modifier(self, info):
+        return self.last_modifier.username
 
 class Query(graphene.ObjectType):
     "The main query object for Graphene"
     node = relay.Node.Field()
-    projects = graphene.List(ProjectNode)
+    tasks = graphene.List(TaskNode)
 
-    def resolve_projects(self, info: Any) -> Any:
+    def resolve_tasks(self, info: Any) -> Any:
         session = get_session(info.context)
         user_id = info.context.get('user').id
         if user_id is None:
             raise GraphQLError('This op needs user-id.')
-        proj_query = ProjectNode.get_query(info).join(UserProject, UserProject.project_id == Project.id).filter_by(user_id=user_id)
+        proj_query = TaskNode.get_query(info)
         return proj_query.all()
 
 
 #################### MUTATION ########################
 
-
-class TaskInput(InputObjectType):
-    body = String(required=True)
-
-
-class BoardInput(InputObjectType):
-    name = String(required=True)
-    tasks = List(TaskInput)
-
-
-class ProjectContentInput(InputObjectType):
-    boards = List(BoardInput)
 
 
 def get_user(session, user_id):
@@ -77,14 +59,16 @@ def get_user(session, user_id):
     return user
 
 
-class CreateProject(Mutation):
+class CreateTask(Mutation):
     class Arguments:
         title = String(required=True)
-        content = ProjectContentInput(required=True)
+        description = String(default_value="")
+        due_date = DateTime()
+        status = String(required=True)
 
-    project = Field(ProjectNode)
+    task = Field(TaskNode)
 
-    def mutate(self, info, title, content):
+    def mutate(self, info, title, description="", due_date=None, status="pending"):
         session = get_session(info.context)
         user_id = info.context.get('user').id
         if user_id is None:
@@ -92,22 +76,23 @@ class CreateProject(Mutation):
         user = get_user(session, user_id)
         if user is None:
             raise GraphQLError(f'The user-id {user_id} is not found.')
-        project = Project(title=title, content=content)
-        user_project = UserProject()
-        user_project.project = project
-        user_project.user = user
-        session.add(project)
-        session.add(user_project)
+        new_task = Task(title=title, description=description, status=status, due_date=due_date, creator=user, last_modifier=user)
+        session.add(new_task)
         session.commit()
-        return CreateProject(project=project)
+        return CreateTask(task=new_task)
+
+def is_owned(a_task, user_id):
+    return a_task.creator_id == user_id
 
 
-def is_owned(session, user_id, project_id):
-    stmt = select(UserProject).filter_by(project_id=project_id, user_id=user_id)
-    assoc = session.scalars(stmt).one_or_none()
-    return assoc is not None
+def get_task(session, task_id):
+    stmt = select(Task).filter_by(id=1)
+    print(f'STMT = {stmt}')
+    the_task = session.execute(stmt).scalar_one_or_none()
+    return the_task
 
-class DeleteProject(Mutation):
+
+class DeleteTask(Mutation):
     class Arguments:
         id = Int(required=True)
 
@@ -118,46 +103,52 @@ class DeleteProject(Mutation):
         user_id = info.context.get('user').id
         if user_id is None:
             raise GraphQLError('This op needs user-id.')
-        if not is_owned(session, user_id, id):
+        the_task = get_task(session, id)
+        if the_task is None:
+            raise GraphQLError(f'The task #{id} does not exist.')
+        if not is_owned(the_task, user_id):
             raise GraphQLError('This project is not belong to the user.')
-        del_stmt = delete(Project).where(Project.id == id).returning(Project.id)
+        del_stmt = delete(Task).where(Task.id == id).returning(Task.id)
         del_result = session.execute(del_stmt).one_or_none()
         if del_result is None:
             raise GraphQLError(f'Cannot delete the project #{id}')
         session.commit()
-        return DeleteProject(id=id)
+        return DeleteTask(id=id)
 
 
-class UpdateProject(Mutation):
+class UpdateTask(Mutation):
     class Arguments:
         id = Int(required=True)
-        title = String(required=True)
-        content = ProjectContentInput(required=True)
+        title = String(required=False)
+        description = String(required=False)
+        due_date = DateTime(required=False)
+        status = String(required=False)
 
-    project = Field(ProjectNode)
-
-    def mutate(self, info, id, title, content):
+    task = Field(TaskNode)
+#title, description, due_date, status
+    def mutate(self, info, id, **kwargs):
         session = get_session(info.context)
         user_id = info.context.get('user').id
         if user_id is None:
             raise GraphQLError('This op needs user-id.')
-        if not is_owned(session, user_id, id):
-            raise GraphQLError('This project is not belong to the user.')
-        stmt = select(Project).filter_by(id=id)
-        the_project = session.execute(stmt).scalar_one_or_none()
-        if the_project is None:
-            raise GraphQLError(f'This project #{id} does not exist.')
-        the_project.title = title
-        the_project.content = content
-        session.add(the_project)
+        the_task = get_task(session, id)
+        if the_task is None:
+            raise GraphQLError(f'The task #{id} does not exist.')
+        for k in kwargs:
+            v = kwargs[k]
+            setattr(the_task, k, v)
+        the_task.last_modifier_id = user_id
+        session.add(the_task)
         session.commit()
-        return CreateProject(project=the_project)
+        return UpdateTask(the_task)
 
 
 class Mutation(ObjectType):
-    create_project = CreateProject.Field()
-    delete_project = DeleteProject.Field()
-    update_project = UpdateProject.Field()
+     create_task = CreateTask.Field()
+     delete_task = DeleteTask.Field()
+     update_task = UpdateTask.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
+
+#schema = graphene.Schema(query=Query)
