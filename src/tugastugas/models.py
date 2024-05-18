@@ -1,6 +1,6 @@
 import datetime
 from typing import Any, TypedDict, List
-from sqlalchemy import String, Integer, Boolean, DateTime
+from sqlalchemy import String, Integer, Boolean, Date
 from sqlalchemy import text
 from sqlalchemy import Table
 from sqlalchemy import Column
@@ -40,8 +40,7 @@ class Task(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[String] = mapped_column(String())
     description: Mapped[String] = mapped_column(String(), default="")
-    due_date: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=False), nullable=True)
+    due_date: Mapped[str] = mapped_column(Date(), nullable=True)
     status: Mapped[String] = mapped_column(String(64))
     creator_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     creator: Mapped["User"] = relationship(foreign_keys=[creator_id])

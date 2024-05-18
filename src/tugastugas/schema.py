@@ -8,7 +8,7 @@ from graphene import relay
 from graphene import ObjectType, InputObjectType
 from graphene import String
 from graphene import List
-from graphene import DateTime
+from graphene import Date
 from graphene import Field
 from graphene import Mutation
 from graphene import Int
@@ -41,7 +41,7 @@ class TaskNode(SQLAlchemyObjectType):
 
 class Query(graphene.ObjectType):
     "The main query object for Graphene"
-    tasks = graphene.List(TaskNode, status=String(), creator=String(), last_modifier=String())
+    tasks = graphene.List(TaskNode, status=String(), creator=String(), last_modifier=String(), due_since=Date(), due_before=Date())
 
     def resolve_tasks(self, info: Any, **kwargs) -> Any:
         session = get_session(info.context)
@@ -57,7 +57,10 @@ class Query(graphene.ObjectType):
         if 'last_modifier' in kwargs:
             last_modifier_alias = aliased(User)
             proj_query = proj_query.join(last_modifier_alias, last_modifier_alias.id == Task.last_modifier_id).where(last_modifier_alias.username == kwargs['last_modifier'])
-        print(kwargs)
+        if 'due_since' in kwargs:
+            proj_query = proj_query.where(Task.due_date >= kwargs['due_since'])
+        if 'due_before' in kwargs:
+            proj_query = proj_query.where(Task.due_date < kwargs['due_before'])
         return proj_query.all()
 
 
@@ -75,7 +78,7 @@ class CreateTask(Mutation):
     class Arguments:
         title = String(required=True)
         description = String(default_value="")
-        due_date = DateTime()
+        due_date = Date()
         status = String(required=True)
 
     task = Field(TaskNode)
@@ -146,7 +149,7 @@ class UpdateTask(Mutation):
         id = Int(required=True)
         title = String(required=False)
         description = String(required=False)
-        due_date = DateTime(required=False)
+        due_date = Date(required=False)
         status = String(required=False)
 
     task = Field(TaskNode)
