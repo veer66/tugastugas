@@ -127,6 +127,31 @@ One of them has to be put in HTTP header for authentication and identify the use
 Authorization: Bearer access-token-1
 ```
 
+### Create a task
+
+```GraphQL
+mutation {
+  createTask(
+        title:"Create a Mastodon instance",
+        description:"For experimenting decentralize social network",
+        status:"DOING",
+        dueDate: "2027-01-01"
+ ) { task { id } }
+}
+```
+
+### Update a task
+
+```GraphQL
+mutation {
+  updateTask(
+        id:1,
+        status:"DONE",
+ ) { task { id } }
+}
+```
+
+
 ### Retrieve tasks
 
 * Query:
@@ -216,30 +241,7 @@ query {
   }
 }
 ```
-### Create a task
 
-```GraphQL
-mutation {
-  createTask(
-        title:"Create a Mastodon instance",
-        description:"For experimenting decentralize social network",
-        status:"DOING",
-        dueDate: "2027-01-01"
- ) { task { id } }
-}
-```
-
-### Update a task
-
-```GraphQL
-mutation {
-  updateTask(
-        id:1,
-        status:"DONE",
- ) { task { id } }
-}
-
-```
 ### Delete a task
 
 ```GraphQL
