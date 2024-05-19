@@ -5,6 +5,7 @@ from sqlalchemy import text
 from sqlalchemy import Table
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
+from sqlalchemy import false
 from sqlalchemy.types import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
@@ -48,7 +49,7 @@ class Task(Base):
     last_modifier: Mapped["User"] = relationship(
         foreign_keys=[last_modifier_id])
     from_undo: Mapped[bool] = mapped_column(Boolean,
-                                            server_default=text('false'))
+                                            server_default=false())
 
 
 # Adapted from cxↄ's comment on Stackoverflow https://stackoverflow.com/a/66453481/4685140
@@ -68,3 +69,4 @@ class HTask(Base):
     from_undo: Mapped[bool] = mapped_column(Boolean)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     user: Mapped["User"] = relationship()
+    used: Mapped[bool] = mapped_column(Boolean, server_default=false())

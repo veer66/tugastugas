@@ -20,7 +20,7 @@ class Base(DeclarativeBase):
 
 
 def bind():
-    engine = create_engine(get_url())
+    engine = create_engine(get_url(), echo=True)
     session_factory = sessionmaker(autocommit=False,
                                    autoflush=False,
                                    bind=engine)
