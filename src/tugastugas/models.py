@@ -33,7 +33,7 @@ class User(Base):
 
 class Task(Base):
     """
-    Task model
+    Basic task model
     """
 
     __tablename__ = "task"
@@ -55,6 +55,24 @@ class Task(Base):
 
 
 class HTask(Base):
+    """Model for storing task history information.
+
+      This SQLAlchemy model represents a table named 'h_task' that stores historical data 
+      related to task operations. It keeps track of changes made to tasks, including:
+
+      * `id` (int, primary key): Unique identifier for the history record.
+      * `target_row_id` (int, not null): ID of the task object the operation was performed on.
+      * `executed_operation 1-CREATE 2-DELETE 3-UPDATE
+      * `operation_executed_at` (datetime, not null): Timestamp of when the operation was executed.
+    * `data_after_executed_operation` is for storing the entire task row
+      * `from_undo` (bool): Flag indicating if this record is a result of an undo operation.
+      * `user_id` (int, foreign key): ID of the user who performed the operation (foreign key to user.id).
+      * `user` (User, relationship): Relationship to the User model for retrieving user information.
+      * `used` (bool, default=False): Flag indicating if this history record has been used 
+      in an undo operation (defaults to False).
+
+      This model is likely used to implement undo functionalities for tasks. 
+    """
     __tablename__ = 'h_task'
     id: Mapped[int] = mapped_column(primary_key=True)
     target_row_id: Mapped[int] = mapped_column(String(), nullable=False)

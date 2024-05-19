@@ -30,6 +30,7 @@ DECLARE body JSONB;
   v TEXT;
   stmt_state INT;
 BEGIN
+  -- Find the most recent unused history record for the user
   SELECT "id",
   	 "data_after_executed_operation",
 	 "executed_operation",
@@ -43,6 +44,8 @@ BEGIN
   THEN
     RETURN NULL;
   END IF;
+
+  -- Perform undo operation based on the operation type
   IF op_type = 1 -- INSERT
   THEN
      stmt := 'DELETE FROM task WHERE id = ' || quote_literal(task_id);
@@ -51,6 +54,8 @@ BEGIN
   THEN
     stmt := 'INSERT INTO task(';
     stmt_state := 1;
+
+    -- Loop through JSON keys and build the INSERT statement for the deleted task
     FOR k IN SELECT jsonb_object_keys(body)
     LOOP
       IF stmt_state = 1
@@ -64,6 +69,7 @@ BEGIN
 
     stmt := stmt || ') VALUES (';
 
+    -- Loop through JSON keys again and add quoted values
     FOR k IN SELECT jsonb_object_keys(body)
     LOOP
       v := body ->> k;
@@ -94,7 +100,11 @@ BEGIN
     stmt := stmt || ' WHERE id = ' || quote_literal(task_id);
     EXECUTE stmt;
   END IF;
+
+  -- Mark the used history record as used to prevent re-undo
   UPDATE h_task SET used = true WHERE id = h_task_id;
+
+  -- Return the operation type and task ID for reference
   RETURN ROW(op_type, task_id);
 END;
 $$ LANGUAGE plpgsql;

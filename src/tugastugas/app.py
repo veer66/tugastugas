@@ -1,14 +1,39 @@
+"""FastAPI application with User authentication and GraphQL endpoint.
+
+This application demonstrates user authentication using OAuth2 and integrates
+a GraphQL endpoint for data access.
+
+**Features:**
+
+* User model with ID, username, and authentication status.
+* OAuth2 authentication with fake token generation for demonstration.
+* User retrieval based on access token and scope validation.
+* Basic GraphQL endpoint with a context providing database session and user information.
+* Authentication middleware using Bearer token and custom backend.
+* Guard middleware to restrict unauthorized requests (example).
+
+**Note:** This is a simplified example for demonstration purposes. Real-world
+applications should implement secure password hashing and proper authentication mechanisms.
+"""
+
 from typing import Annotated, Any
-from fastapi import Depends, FastAPI, HTTPException, status, Security, Request
+from fastapi import Depends, FastAPI, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from tugastugas.schema import schema
 from tugastugas.database import bind
 from starlette.responses import PlainTextResponse
-from starlette.requests import HTTPConnection, Request
-from starlette.types import ASGIApp, Message, Receive, Scope, Send
+from starlette.requests import HTTPConnection
+from starlette.types import ASGIApp, Receive, Scope, Send
 from starlette.routing import Route
 from starlette_graphene3 import GraphQLApp
+from starlette.authentication import (
+    AuthCredentials,
+    AuthenticationBackend,
+)
+
+from starlette.middleware import Middleware
+from starlette.middleware.authentication import AuthenticationMiddleware
 
 app = FastAPI()
 
@@ -16,6 +41,14 @@ app = FastAPI()
 
 
 class User(BaseModel):
+    """Represents a user entity with basic information.
+
+    This model defines the attributes for a user:
+
+    * `id`: The user's unique identifier (integer).
+    * `username`: The user's login name (string).
+    * `is_authenticated` (optional): A flag indicating if the user is currently authenticated (boolean).
+    """
     id: int
     username: str
     is_authenticated: bool | None = None
@@ -27,6 +60,17 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def fake_decode_token(token):
+    """Fakes token decoding for demonstration purposes (replace with real implementation).
+
+      This function simulates token decoding by checking for predefined token strings. 
+      It returns a dictionary with user information (ID, username, is_authenticated)
+      if the token matches a valid string (access-token-1, access-token-2, or access-token-3).
+      Otherwise, it returns None.
+
+      **Important:** This function is for demonstration only. In a real application,
+      you should implement a secure token decoding mechanism using a proper JWT library
+      and secret key to verify and extract user information from a real access token.
+      """
     if token == "access-token-1" or token == b"access-token-1":
         return {"id": 1, "username": "usr1", "is_authenticated": True}
     elif token == "access-token-2" or token == b"access-token-2":
@@ -61,24 +105,23 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     return {"access_token": "access-token-1", "token_type": "bearer"}
 
 
-@app.get("/users/me")
-async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)], ):
-    return current_user
-
-
 ############# GraghQL #################
 
 session = bind()
 
-from starlette.authentication import (AuthCredentials, AuthenticationBackend,
-                                      AuthenticationError)
-
-from starlette.middleware import Middleware
-from starlette.middleware.authentication import AuthenticationMiddleware
-
 
 class BearerAuthBackend(AuthenticationBackend):
+    """Custom authentication backend for Bearer token scheme.
+
+      This backend checks for Bearer token authorization in the request headers.
+      It extracts the token and uses `fake_decode_token` (for demonstration purposes)
+      to decode it. If the token is valid, it returns user credentials and the User object.
+      If the token is invalid or not found, it returns None.
+
+      **Important:** This backend uses `fake_decode_token` which is for demonstration only.
+      In a real application, you should implement a secure token decoding mechanism
+      using a JWT library and secret key to verify real access tokens.
+      """
 
     async def authenticate(self, conn):
         if "Authorization" not in conn.headers:
@@ -96,6 +139,14 @@ class BearerAuthBackend(AuthenticationBackend):
 
 
 class GuardUnauthorizedRequestMiddleware:
+    """Middleware to restrict access to unauthorized requests.
+
+      This middleware checks if a user object is present in the request scope (`scope`)
+      and if the user's `is_authenticated` attribute is True. If both conditions are met,
+      it allows the request to proceed through the application (`await self.app(scope, receive, send)`).
+      Otherwise, it returns a `PlainTextResponse` with a 401 Unauthorized status code
+      effectively blocking the request.
+      """
 
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
