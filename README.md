@@ -153,11 +153,13 @@ curl 'http://172.18.0.3:8000/' \
 
 ### Filter tasks
 
+These filters can be mixed in the same query.
+
 1. Filter by ID
 
 ```GraphQL
 query {
-  tasks(id:2) {
+  tasks(id:1) {
     id,
     title,
     status
@@ -199,7 +201,7 @@ query {
 
 ```GraphQL
 query {
-  tasks(dueBefore:"2026-01-01") {
+  tasks(dueBefore:"2027-01-01") {
     title,
   }
 }
@@ -208,7 +210,7 @@ query {
 
 ```GraphQL
 query {
-  tasks(dueBefore:"2026-01-01") {
+  tasks(dueSince:"2027-01-01") {
     title,
   }
 }
