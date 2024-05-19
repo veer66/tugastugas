@@ -19,7 +19,7 @@ A showcase for:
 ## Design Rationale
 
 * I'm avoiding SQL 2011 temporal functionality in this project because using the temporal_tables extension isn't feasible with Amazon Aurora.
-* "The implementation leverages PL/pgSQL for undo operations, as the support for JSON queries within the ORM is uncertain.
+* "The implementation leverages [PL/pgSQL for undo operations](alembic/versions/fce4251eee5b_add_undo_function.py), as the support for JSON queries within the ORM is uncertain.
 
 ## Running for development
 
