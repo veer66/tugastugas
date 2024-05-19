@@ -189,5 +189,3 @@ class Mutation(ObjectType):
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
-
-#schema = graphene.Schema(query=Query)
