@@ -257,3 +257,8 @@ mutation {
   undoTask { task { id } }
 }
 ```
+
+## Test
+
+Testing can be run via pytest,
+but fortunately, since it uses Docker to spin up a PostgreSQL instance for testing, it cannot be run from inside another Docker container.
