@@ -133,6 +133,7 @@ def update_task(context):
                 updateTask(
                   id:2
                   title:"T2-R1",
+                  dueDate:"2027-01-01",
                   status:"DONE"
                 ) {
                   task {
@@ -204,6 +205,19 @@ def query_tasks_with_last_modifier_eq_usr2(context):
     assert result.errors is None
     assert set([task['title']
                 for task in result.data['tasks']]) == set(['T2-R1', 'T3'])
+
+
+def query_tasks_with_due_before(context):
+    query = '''
+              query QueryStatusEqDone {
+                tasks(dueBefore:"2026-01-01") {
+                  title,
+                }
+              }
+            '''
+    result = schema.schema.execute(query, context=context)
+    assert result.errors is None
+    assert result.data['tasks'] == [{'title': 'T3'}]
 
 
 def test_crud(pg_engine: Any) -> None:
