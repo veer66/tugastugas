@@ -20,13 +20,12 @@ class Base(DeclarativeBase):
 
 
 def bind():
-    engine = create_engine(get_url(), echo=True)
+    engine = create_engine(get_url(), echo=False)
     session_factory = sessionmaker(autocommit=False,
                                    autoflush=False,
                                    bind=engine)
     scoped_session = scoped_session_factory(session_factory)
     Base.query = scoped_session.query_property()
-    #    Base.query = scoped_session.query()
     Base.metadata.bind = engine
     return scoped_session
 

@@ -117,8 +117,7 @@ class CreateTask(Mutation):
                         last_modifier=user)
         session.add(new_task)
         session.commit()
-        history_stmt = text(
-        """
+        history_stmt = text("""
           INSERT INTO h_task (target_row_id,
                     executed_operation,
                     data_after_executed_operation,
@@ -132,10 +131,12 @@ class CreateTask(Mutation):
           FROM task
           WHERE task.id = :task_id;
         """)
-        session.execute(history_stmt, {"user_id": user_id, "task_id": new_task.id})
+        session.execute(history_stmt, {
+            "user_id": user_id,
+            "task_id": new_task.id
+        })
         session.commit()
         return CreateTask(task=new_task)
-
 
 
 def is_owned(a_task, user_id):
@@ -144,7 +145,6 @@ def is_owned(a_task, user_id):
 
 def get_task(session, task_id):
     stmt = select(Task).filter_by(id=task_id)
-    print(f'STMT = {stmt}')
     the_task = session.execute(stmt).scalar_one_or_none()
     return the_task
 
@@ -166,8 +166,7 @@ class DeleteTask(Mutation):
             raise GraphQLError(f'The task #{id} does not exist.')
         if not is_owned(the_task, user_id):
             raise GraphQLError('This project is not belong to the user.')
-        history_stmt = text(
-        """
+        history_stmt = text("""
           INSERT INTO h_task (target_row_id,
                     executed_operation,
                     data_after_executed_operation,
@@ -210,8 +209,7 @@ class UpdateTask(Mutation):
             raise GraphQLError('This op needs user-id.')
         the_task = get_task(session, id)
 
-        history_stmt = text(
-        """
+        history_stmt = text("""
           INSERT INTO h_task (target_row_id,
                     executed_operation,
                     data_after_executed_operation,
@@ -238,11 +236,11 @@ class UpdateTask(Mutation):
         session.commit()
         return UpdateTask(the_task)
 
+
 class UndoTask(Mutation):
 
     class Arguments:
         pass
-        #username = String(required=True)
 
     task = Field(TaskNode)
 
@@ -251,28 +249,22 @@ class UndoTask(Mutation):
         user_id = info.context.get('user').id
         if user_id is None:
             raise GraphQLError('This op needs user-id.')
-        # user = get_user(session, user_id)
-        # if user is None:
-        #     raise GraphQLError(f'The user-id {user_id} is not found.')
-        # if user.username != username:
-        #     raise GraphQLError(f"This session has no clearance to undo user: {username}'s action")
 
-
-        undo_result = session.execute(text("SELECT undo_task_action(:user_id)"), {"user_id": user_id}).scalar_one_or_none()
+        undo_result = session.execute(
+            text("SELECT undo_task_action(:user_id)"), {
+                "user_id": user_id
+            }).scalar_one_or_none()
 
         if undo_result is None or undo_result[0] is None:
             raise GraphQLError(f'Cannot undo anything for user {user_id}')
         op_type, task_id = undo_result
-        print(f'OP-TYPE: {type(op_type)} {op_type}')
         if op_type == '1':
             return UpdateTask(task=None)
         session.commit()
-        print(f'task_id = {task_id}')
         the_task = get_task(session, int(task_id))
         if the_task is None:
             raise GraphQLError(f'The task #{id} does not exist.')
         return UpdateTask(task=the_task)
-
 
 
 class Mutation(ObjectType):
