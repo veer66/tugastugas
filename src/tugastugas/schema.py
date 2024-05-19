@@ -164,7 +164,6 @@ class UpdateTask(Mutation):
 
     task = Field(TaskNode)
 
-    #title, description, due_date, status
     def mutate(self, info, id, **kwargs):
         session = get_session(info.context)
         user_id = info.context.get('user').id

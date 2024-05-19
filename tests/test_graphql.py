@@ -114,13 +114,19 @@ def query_tasks_after_delete(context):
 def update_task(context):
     query = '''
               mutation U1 {
-                tasks {
-                  title
+                updateTask(
+                  id:1
+                  title:"T3"
+                ) {
+                  task {
+                    title
+                  }
                 }
               }
             '''
     result = schema.schema.execute(query, context=context)
     assert result.errors is None
+    assert result.data == {"updateTask": {"task": {"title": "T3"}}}
 
 
 def test_project_query(pg_engine: Any) -> None:
@@ -139,76 +145,6 @@ def test_project_query(pg_engine: Any) -> None:
     add_users(pg_session)
     create_tasks(context)
     query_tasks(context)
+    update_task(context)
     delete_task(context)
     query_tasks_after_delete(context)
-    # '''
-    # mut_result = schema.schema.execute(mut_query, context=context)
-
-    # assert mut_result.errors is None
-    # added_id = str(mut_result.data["createProject"]["project"]["id"])
-
-    # query = '''
-    #           query Hey {
-    #             projects {
-    #               id,
-    #               title
-    #             }
-    #           }
-    #         '''
-    # Base.query = pg_session.query_property()
-    # result = schema.schema.execute(query, context=context)
-    # assert result.data['projects'][0]['title'] == 'A1'
-
-    # update_query = '''
-    #   mutation {
-    #     updateProject(
-    #       id: __ID__,
-    #       title: "A2",
-    #         content: {
-    #           boards: [{name: "DONE", tasks: [{body: "eat"}, {body: "sleep"}]}]
-    #         }
-    #     ) { project { id, title, content { boards { name, tasks { body } } } } }
-    #   }
-    # '''
-    # update_query = update_query.replace('__ID__', str(added_id))
-    # update_result = schema.schema.execute(update_query, context=context)
-
-    # assert update_result.errors is None
-
-    # board = update_result.data["updateProject"]["project"]["content"]["boards"][0]
-    # assert (board["tasks"][1]["body"]) == "sleep"
-
-    # after_update_query = '''
-    #           query {
-    #             projects {
-    #               id,
-    #               title,
-    #               content { boards { name, tasks { body } } }
-    #             }
-    #           }
-    #         '''
-    # after_update_result = schema.schema.execute(after_update_query, context=context)
-
-    # assert after_update_result.errors is None
-
-    # another_user_query = 'query { projects { id } }'
-    # another_user_context = {"session": pg_session, "user": User(id=300)}
-    # another_user_result = schema.schema.execute(another_user_query, context=another_user_context)
-    # assert len(another_user_result.data['projects']) == 0
-
-    # after_update_project = after_update_result.data["projects"][0]
-    # after_update_board = after_update_project["content"]["boards"][0]
-    # assert after_update_board["tasks"][1]["body"] == "sleep"
-
-    # del_query = 'mutation { deleteProject(id: ' + added_id + ') { id } }'
-    # del_result = mut_result = schema.schema.execute(del_query, context=context)
-
-    # assert del_result.errors is None
-
-    # query_after_del = '''
-    #           query {
-    #             projects { id }
-    #           }
-    #           '''
-    # result_after_del = schema.schema.execute(query_after_del, context=context)
-    # assert len(result_after_del.data['projects']) == 0
