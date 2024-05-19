@@ -129,6 +129,8 @@ Authorization: Bearer access-token-1
 
 ### Create a task
 
+* Query:
+
 ```GraphQL
 mutation {
   createTask(
@@ -139,6 +141,17 @@ mutation {
  ) { task { id } }
 }
 ```
+* Query via cURL
+
+```Bash
+curl 'http://172.18.0.3:8000/' \
+     -X POST \
+     -H 'Accept: application/json' \
+     -H 'Content-Type: application/json' \
+     -H 'Authorization: Bearer access-token-1' \
+     --data-raw '{"query":"mutation {\n  createTask(\n        title:\"Create a Mastodon instance\",\n        description:\"For experimenting decentralize social network\",\n        status:\"DOING\",\n        dueDate: \"2027-01-01\"\n ) { task { id } }\n}","variables":{},"operationName":null}'
+```
+
 
 ### Update a task
 
