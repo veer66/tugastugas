@@ -47,7 +47,8 @@ class Task(Base):
     last_modifier_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     last_modifier: Mapped["User"] = relationship(
         foreign_keys=[last_modifier_id])
-    from_undo: Mapped[bool] = mapped_column(Boolean, default=False)
+    from_undo: Mapped[bool] = mapped_column(Boolean,
+                                            server_default=text('false'))
 
 
 # Adapted from cxↄ's comment on Stackoverflow https://stackoverflow.com/a/66453481/4685140
