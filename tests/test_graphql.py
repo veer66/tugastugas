@@ -15,8 +15,6 @@ alembic_engine: Any = create_postgres_fixture()
 pg_engine = create_postgres_fixture(Base)
 
 
-
-
 @pytest.mark.alembic()
 def prepare(alembic_runner: Any) -> None:
     alembic_runner.migrate_up_to("head", return_current=False)
@@ -99,6 +97,7 @@ def delete_task(context):
     assert result.errors is None
     assert result.data == {"deleteTask": {"id": 1}}
 
+
 def query_tasks_after_delete(context):
     query = '''
               query Q1 {
@@ -124,14 +123,14 @@ def update_task(context):
     assert result.errors is None
 
 
-
 def test_project_query(pg_engine: Any) -> None:
 
     class TestUser(BaseModel):
         id: int
 
     user = TestUser(id=1)
-    session_factory = sessionmaker(autocommit=False, autoflush=False,
+    session_factory = sessionmaker(autocommit=False,
+                                   autoflush=False,
                                    bind=pg_engine)
     pg_session = scoped_session_factory(session_factory)
     Base.query = pg_session.query_property()
@@ -159,7 +158,6 @@ def test_project_query(pg_engine: Any) -> None:
     # Base.query = pg_session.query_property()
     # result = schema.schema.execute(query, context=context)
     # assert result.data['projects'][0]['title'] == 'A1'
-    
 
     # update_query = '''
     #   mutation {
