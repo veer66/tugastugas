@@ -129,7 +129,7 @@ Authorization: Bearer access-token-1
 
 ### Create a task
 
-* Query:
+* Query
 
 ```GraphQL
 mutation {
@@ -167,7 +167,7 @@ mutation {
 
 ### Retrieve tasks
 
-* Query:
+* Query
 
 ```GraphQL
 query {
@@ -177,7 +177,7 @@ query {
 }
 ```
 
-* Example using cURL
+* Query via cURL
 
 (Please replace 172.18.0.3 with your container's IP Address)
 
