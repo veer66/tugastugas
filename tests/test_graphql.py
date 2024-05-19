@@ -31,7 +31,7 @@ def create_task1(context):
     query = '''
         mutation C1 {
           createTask(
-              title:"TITLE1",
+              title:"T1",
               description:"DESC1",
               dueDate:"2026-01-01",
               status:"DOING",
@@ -51,7 +51,7 @@ def create_task2(context):
     query = '''
         mutation C2 {
           createTask(
-              title:"TITLE2",
+              title:"T2",
               description:"DESC2",
               status:"DOING",
           )
@@ -98,9 +98,8 @@ def query_tasks(context):
     result = schema.schema.execute(query, context=context)
     assert result.errors is None
     assert len(result.data['tasks']) == 3
-    tasks = result.data['tasks']
-    assert tasks[0]['title'] == 'TITLE1'
-    assert tasks[1]['title'] == 'TITLE2'
+    assert set([task['title']
+                for task in result.data['tasks']]) == set(["T1", "T2", "T3"])
 
 
 def delete_task(context):
@@ -218,6 +217,20 @@ def query_tasks_with_due_before(context):
     result = schema.schema.execute(query, context=context)
     assert result.errors is None
     assert result.data['tasks'] == [{'title': 'T3'}]
+
+
+def query_tasks_with_due_since(context):
+    query = '''
+              query QueryStatusEqDone {
+                tasks(dueBefore:"2026-01-01") {
+                  title,
+                }
+              }
+            '''
+    result = schema.schema.execute(query, context=context)
+    assert result.errors is None
+    assert set([task['title']
+                for task in result.data['tasks']]) == set(["T1", "T2-R1"])
 
 
 def test_crud(pg_engine: Any) -> None:
