@@ -90,12 +90,12 @@ def query_tasks(context):
 def delete_task(context):
     query = '''
     mutation D1 {
-      deleteTask(id:1) { id }
+      deleteTask(id:2) { id }
     }
     '''
     result = schema.schema.execute(query, context=context)
     assert result.errors is None
-    assert result.data == {"deleteTask": {"id": 1}}
+    assert result.data == {"deleteTask": {"id": 2}}
 
 
 def query_tasks_after_delete(context):
@@ -119,6 +119,7 @@ def update_task(context):
                   title:"T3"
                 ) {
                   task {
+                    id,
                     title
                   }
                 }
@@ -126,10 +127,24 @@ def update_task(context):
             '''
     result = schema.schema.execute(query, context=context)
     assert result.errors is None
-    assert result.data == {"updateTask": {"task": {"title": "T3"}}}
+    assert result.data == {"updateTask": {"task": {"id": 1, "title": "T3"}}}
 
 
-def test_project_query(pg_engine: Any) -> None:
+def query_tasks_after_update(context):
+    query = '''
+              query Q3 {
+                tasks {
+                  id,
+                  title
+                }
+              }
+            '''
+    result = schema.schema.execute(query, context=context)
+    assert result.errors is None
+    assert result.data['tasks'][0] == {'id': 1, 'title': 'T3'}
+
+
+def test_crud(pg_engine: Any) -> None:
 
     class TestUser(BaseModel):
         id: int
@@ -145,6 +160,7 @@ def test_project_query(pg_engine: Any) -> None:
     add_users(pg_session)
     create_tasks(context)
     query_tasks(context)
-    update_task(context)
     delete_task(context)
     query_tasks_after_delete(context)
+    update_task(context)
+    query_tasks_after_update(context)
