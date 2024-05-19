@@ -70,7 +70,7 @@ def create_task3(context):
     query = '''
         mutation C3 {
           createTask(
-              title:"C3",
+              title:"T3",
               description:"D3",
               dueDate: "2000-05-01",
               status:"DOING",
@@ -81,10 +81,10 @@ def create_task3(context):
     assert result.errors is None
 
 
-def create_tasks(context):
+def create_tasks(context, context_user2):
     create_task1(context)
     create_task2(context)
-    create_task3(context)
+    create_task3(context_user2)
 
 
 def query_tasks(context):
@@ -179,24 +179,40 @@ def query_tasks_with_status_eq_done(context):
     assert result.data['tasks'][0] == {'id': 2}
 
 
+def query_tasks_with_creator_eq_usr2(context):
+    query = '''
+              query QueryStatusEqDone {
+                tasks(creator:"usr2") {
+                  title,
+                }
+              }
+            '''
+    result = schema.schema.execute(query, context=context)
+    assert result.errors is None
+    assert result.data['tasks'] == [{'title': 'T3'}]
+
+
 def test_crud(pg_engine: Any) -> None:
 
     class TestUser(BaseModel):
         id: int
 
     user = TestUser(id=1)
+    user2 = TestUser(id=2)
     session_factory = sessionmaker(autocommit=False,
                                    autoflush=False,
                                    bind=pg_engine)
     pg_session = scoped_session_factory(session_factory)
     Base.query = pg_session.query_property()
     context = {"session": pg_session, "user": user}
+    context_user2 = {"session": pg_session, "user": user2}
 
     add_users(pg_session)
-    create_tasks(context)
+    create_tasks(context, context_user2)
     query_tasks(context)
     update_task(context)
     query_tasks_after_update_with_id_filter(context)
     query_tasks_with_status_eq_done(context)
+    query_tasks_with_creator_eq_usr2(context)
     delete_task(context)
     query_tasks_after_delete(context)
