@@ -131,9 +131,9 @@ def get_task(session, task_id):
 class DeleteTask(Mutation):
 
     class Arguments:
-        id = String(required=True)
+        id = Int(required=True)
 
-    id = String(required=True)
+    id = Int(required=True)
 
     def mutate(self, info, id):
         session = get_session(info.context)

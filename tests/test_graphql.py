@@ -33,7 +33,7 @@ def create_task1(context):
           createTask(
               title:"TITLE1",
               description:"DESC1",
-              dueDate:"2026-01-01T071040Z",
+              dueDate:"2026-01-01",
               status:"DOING",
           )
           {
