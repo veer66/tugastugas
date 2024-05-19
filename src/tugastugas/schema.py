@@ -42,6 +42,7 @@ class TaskNode(SQLAlchemyObjectType):
 class Query(graphene.ObjectType):
     "The main query object for Graphene"
     tasks = graphene.List(TaskNode,
+                          id=Int(),
                           status=String(),
                           creator=String(),
                           last_modifier=String(),
@@ -54,6 +55,8 @@ class Query(graphene.ObjectType):
         if user_id is None:
             raise GraphQLError('This op needs user-id.')
         proj_query = TaskNode.get_query(info)
+        if 'id' in kwargs:
+            proj_query = proj_query.filter_by(id=kwargs['id'])
         if 'status' in kwargs:
             proj_query = proj_query.filter_by(status=kwargs['status'])
         if 'creator' in kwargs:
@@ -122,7 +125,7 @@ def is_owned(a_task, user_id):
 
 
 def get_task(session, task_id):
-    stmt = select(Task).filter_by(id=1)
+    stmt = select(Task).filter_by(id=task_id)
     print(f'STMT = {stmt}')
     the_task = session.execute(stmt).scalar_one_or_none()
     return the_task
@@ -170,6 +173,7 @@ class UpdateTask(Mutation):
         if user_id is None:
             raise GraphQLError('This op needs user-id.')
         the_task = get_task(session, id)
+        print(f'*********** ID={id}')
         if the_task is None:
             raise GraphQLError(f'The task #{id} does not exist.')
         for k in kwargs:

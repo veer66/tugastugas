@@ -66,9 +66,25 @@ def create_task2(context):
     assert result.errors is None
 
 
+def create_task3(context):
+    query = '''
+        mutation C3 {
+          createTask(
+              title:"C3",
+              description:"D3",
+              dueDate: "2000-05-01",
+              status:"DOING",
+          ) { task { id } }
+        }
+    '''
+    result = schema.schema.execute(query, context=context)
+    assert result.errors is None
+
+
 def create_tasks(context):
     create_task1(context)
     create_task2(context)
+    create_task3(context)
 
 
 def query_tasks(context):
@@ -81,7 +97,7 @@ def query_tasks(context):
             '''
     result = schema.schema.execute(query, context=context)
     assert result.errors is None
-    assert len(result.data['tasks']) == 2
+    assert len(result.data['tasks']) == 3
     tasks = result.data['tasks']
     assert tasks[0]['title'] == 'TITLE1'
     assert tasks[1]['title'] == 'TITLE2'
@@ -108,15 +124,16 @@ def query_tasks_after_delete(context):
             '''
     result = schema.schema.execute(query, context=context)
     assert result.errors is None
-    assert len(result.data['tasks']) == 1
+    assert len(result.data['tasks']) == 2
 
 
 def update_task(context):
     query = '''
               mutation U1 {
                 updateTask(
-                  id:1
-                  title:"T3"
+                  id:2
+                  title:"T2-R1",
+                  status:"DONE"
                 ) {
                   task {
                     id,
@@ -127,21 +144,39 @@ def update_task(context):
             '''
     result = schema.schema.execute(query, context=context)
     assert result.errors is None
-    assert result.data == {"updateTask": {"task": {"id": 1, "title": "T3"}}}
+    assert result.data == {"updateTask": {"task": {"id": 2, "title": "T2-R1"}}}
 
 
-def query_tasks_after_update(context):
+def query_tasks_after_update_with_id_filter(context):
     query = '''
               query Q3 {
-                tasks {
+                tasks(id:2) {
                   id,
-                  title
+                  title,
+                  status
                 }
               }
             '''
     result = schema.schema.execute(query, context=context)
     assert result.errors is None
-    assert result.data['tasks'][0] == {'id': 1, 'title': 'T3'}
+    assert result.data['tasks'][0] == {
+        'id': 2,
+        'title': 'T2-R1',
+        'status': 'DONE'
+    }
+
+
+def query_tasks_with_status_eq_done(context):
+    query = '''
+              query QueryStatusEqDone {
+                tasks(status:"DONE") {
+                  id,
+                }
+              }
+            '''
+    result = schema.schema.execute(query, context=context)
+    assert result.errors is None
+    assert result.data['tasks'][0] == {'id': 2}
 
 
 def test_crud(pg_engine: Any) -> None:
@@ -160,7 +195,8 @@ def test_crud(pg_engine: Any) -> None:
     add_users(pg_session)
     create_tasks(context)
     query_tasks(context)
+    update_task(context)
+    query_tasks_after_update_with_id_filter(context)
+    query_tasks_with_status_eq_done(context)
     delete_task(context)
     query_tasks_after_delete(context)
-    update_task(context)
-    query_tasks_after_update(context)
