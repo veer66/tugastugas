@@ -53,6 +53,7 @@ docker run \
 
 ### Install Python packages
 
+
 ```
 docker run --rm \
        -it \
@@ -68,6 +69,9 @@ docker run --rm \
        docker.io/python:3.11-bookworm \
        bash -c 'pip install -e .'
 ```
+
+Note: If Docker on your operating system doesn't work well with the 
+-u $UID option, you can safely remove that line. However, this has a side effect: the owner of newly created or modified files within the container will be the default Docker user.  Despite this, it should be acceptable for code evaluation purposes.
 
 ### Migrate database and add fake users
 
