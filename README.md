@@ -6,14 +6,16 @@ A showcase for:
 
 * GraphQL
 * Graphene
-* SQLAlchemy
 * PostgreSQL
+* SQLAlchemy
+* Alembic
+* FastAPI
 
 
 ## Objective
 
 * Showing off what I'm capable of in web-backend.
-* Updating my skills and knowledge in unfamiliar (for me) technologies, e.g., GraphQL.
+* Updating my skills and knowledge in unfamiliar (for me) technologies, e.g., GraphQL, FastAPI.
 * Refreshing my knowledge about new versions of tools, e.g., SQLAlchemy 2.x.
 
 ## Design Rationale
