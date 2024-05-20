@@ -22,6 +22,7 @@ A showcase for:
 
 * I'm avoiding SQL 2011 temporal functionality in this project because using the temporal_tables extension isn't feasible with Amazon Aurora.
 * "The implementation leverages [PL/pgSQL for undo operations](alembic/versions/fce4251eee5b_add_undo_function.py), as the support for JSON queries within the ORM is uncertain.
+* Undoing function is based on restoring the latest version before the current one is made. However, a task can be modified by many users. This undoing function may need to be tuned for the case where a user wants to undo a change made by another user, depending on project requirements. 
 
 ## Running for development
 
